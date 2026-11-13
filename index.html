@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Panduan membangun web server di Debian dengan Nginx, domain, dan HTTPS.">
+<title>DebianForge — Build Your Server</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{--ink:#07182b;--panel:#0b2038;--panel2:#102943;--teal:#19d2c3;--white:#f5fbff;--muted:#9db2c5;--line:rgba(112,220,218,.19)}
+*{box-sizing:border-box;margin:0;padding:0;scroll-behavior:smooth}
+body{font-family:Manrope,Arial,sans-serif;background:linear-gradient(135deg,#d8f0f3,#edf5f4);color:var(--ink);padding:28px 4%;min-height:100vh}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer}
+.shell{max-width:1320px;margin:auto;background:var(--ink);color:var(--white);border-radius:18px;overflow:hidden;box-shadow:0 30px 75px rgba(5,30,55,.25);position:relative}
+.shell:before{content:"";position:absolute;width:480px;height:480px;right:18%;top:5%;background:rgba(18,201,190,.1);filter:blur(100px);pointer-events:none}
+header{height:78px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.07);position:relative;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;color:var(--white)}
+.brand-mark{width:31px;height:31px;display:grid;place-items:center;color:var(--teal);border:1px solid var(--line);border-radius:9px}
+.brand span:last-child{color:var(--teal)}
+nav{display:flex;gap:30px;align-items:center}
+nav a,.nav-right a{font-size:11px;color:#d1dce8}
+nav a:hover{color:var(--teal)}
+.pill{padding:11px 18px;border:1px solid var(--line);border-radius:30px;background:rgba(17,210,195,.08)}
+.nav-right{display:flex;gap:22px}
+.menu{display:none;background:none;border:0;color:var(--white);font-size:25px}
+.hero{display:grid;grid-template-columns:.78fr 1.22fr;gap:35px;align-items:center;padding:65px 5% 42px;min-height:440px}
+.kicker{display:inline-flex;gap:9px;align-items:center;color:var(--teal);font-size:10px;letter-spacing:2px;font-weight:800;margin-bottom:22px}
+.kicker:before{content:"";width:22px;height:1px;background:var(--teal)}
+h1{font-size:clamp(42px,5vw,68px);line-height:1.04;letter-spacing:-3px;margin-bottom:22px;color:var(--white)}
+h1 span{color:var(--teal)}
+.lead{color:#b5c5d5;font-size:13px;line-height:1.9;max-width:390px;margin-bottom:25px}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;justify-content:center;align-items:center;padding:13px 22px;border-radius:7px;font-size:11px;font-weight:800;transition:.2s}
+.btn-main{background:var(--teal);color:#052234}
+.btn-main:hover{background:#65eee2;transform:translateY(-2px)}
+.btn-ghost{border:1px solid rgba(255,255,255,.2);color:white;background:transparent}
+.visual{position:relative;min-height:330px;display:flex;align-items:center;justify-content:center}
+.visual-grid{position:absolute;inset:10px 0;background-image:linear-gradient(rgba(26,210,195,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(26,210,195,.05) 1px,transparent 1px);background-size:25px 25px}
+.dashboard{position:relative;width:min(100%,570px);min-height:260px;border:1px solid rgba(25,210,195,.5);border-radius:10px;background:linear-gradient(145deg,#0d263f,#08192e);box-shadow:0 25px 60px #0005;padding:18px 18px 18px 58px}
+.dash-sidebar{position:absolute;left:0;top:0;bottom:0;width:43px;border-right:1px solid var(--line);display:flex;align-items:center;flex-direction:column;gap:22px;padding-top:20px;color:var(--teal)}
+.dash-top{display:flex;justify-content:space-between;color:#a6bbca;font-size:9px;margin-bottom:20px}
+.live{color:var(--teal)}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.metric{border:1px solid var(--line);border-radius:5px;padding:10px;background:#ffffff08}
+.metric small{display:block;color:#829bad;font-size:8px;margin-bottom:7px}
+.metric strong{font-size:13px;color:var(--white)}
+.graph-area{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.graph{border:1px solid #ffffff12;border-radius:6px;padding:11px;min-height:105px}
+.graph-title{font-size:8px;color:#91a8bb;margin-bottom:12px}
+.bars{height:53px;display:flex;align-items:end;gap:6px}
+.bars i{display:block;flex:1;background:linear-gradient(var(--teal),#087c83);border-radius:3px 3px 0 0}
+.ring{width:57px;height:57px;border-radius:50%;border:7px solid #1b5262;border-right-color:var(--teal);margin:auto}
+.floating{position:absolute;right:-3px;bottom:0;width:205px;background:#102b45;border:1px solid rgba(25,210,195,.55);border-radius:9px;padding:15px;box-shadow:0 15px 35px #0006}
+.floating small{font-size:8px;color:#9bb0c2}
+.floating strong{display:block;font-size:21px;margin:9px 0 3px;color:var(--white)}
+.floating button{width:100%;padding:9px;margin-top:10px;border:0;border-radius:4px;background:var(--teal);color:#062238;font-size:9px;font-weight:800}
+.trust{padding:13px 5% 35px;text-align:center;color:#6f879d;font-size:9px;font-weight:700}
+.logos{display:flex;justify-content:space-around;gap:20px;flex-wrap:wrap;margin-top:17px;color:#e4eff5;font-size:15px;font-weight:800}
+.section{padding:72px 5%;border-top:1px solid rgba(255,255,255,.07);position:relative}
+.section-head{text-align:center;max-width:650px;margin:0 auto 35px}
+.eyebrow{font-size:9px;color:var(--teal);letter-spacing:2px;font-weight:800;margin-bottom:12px}
+h2{font-size:clamp(26px,3vw,38px);letter-spacing:-1.4px;margin-bottom:12px;color:var(--white)}
+.section-head p{font-size:12px;line-height:1.8;color:var(--muted)}
+.steps-layout{display:grid;grid-template-columns:250px 1fr;gap:20px;max-width:1050px;margin:auto}
+.step-nav{display:flex;flex-direction:column;gap:8px}
+.step-tab{background:#0b2038;border:1px solid var(--line);color:#a9bdce;border-radius:7px;text-align:left;padding:14px;font-size:11px;cursor:pointer;transition:.2s}
+.step-tab b{display:inline-grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#19354d;color:var(--teal);margin-right:8px}
+.step-tab.active{background:#12334a;border-color:var(--teal);color:white}
+.step-panel{background:linear-gradient(145deg,#0d233b,#0a1b30);border:1px solid var(--line);border-radius:10px;padding:25px;min-height:360px;color:var(--white)}
+.step-panel h3{font-size:18px;margin-bottom:9px;color:var(--white)}
+.step-panel>p{font-size:12px;line-height:1.8;color:var(--muted);margin-bottom:18px}
+.step-panel h4{font-size:12px;margin:17px 0 7px;color:#e8f8ff}
+.task{font-size:11px;color:#bdcfdd;line-height:1.8;margin:10px 0}
+.task b{color:var(--teal)}
+.note,.result,.trouble{padding:12px 14px;font-size:11px;line-height:1.8;margin:15px 0;border-radius:0 5px 5px 0}
+.note{background:rgba(25,210,195,0.07);border-left:2px solid var(--teal);color:#b9d2dc}
+.result{background:rgba(26,157,103,0.09);border-left:2px solid #42d99b;color:#b9e9d2}
+.trouble{background:rgba(233,163,58,0.07);border-left:2px solid #e9a33a;color:#e8d1a9}
+.codebox{background:#061322;border:1px solid #ffffff17;border-radius:7px;margin:12px 0 18px;overflow:hidden}
+.codehead{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#ffffff08;color:#8da5b8;font-size:9px}
+.codehead button{border:1px solid var(--line);background:transparent;color:var(--teal);border-radius:4px;padding:5px 9px;font-size:9px;cursor:pointer}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:15px;color:#75e8c8;font:11px/1.9 'DM Mono',monospace}
+.step-actions{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:10px}
+.step-actions span{font-size:10px;color:#8da5b8}
+.progress{height:4px;background:#1a344b;border-radius:5px;margin-top:20px;overflow:hidden}
+.progress-bar{height:100%;background:var(--teal);width:12.5%;transition:.3s}
+.checkline{display:flex;align-items:flex-start;gap:9px;color:#c1d0dc;font-size:11px;margin-top:14px;line-height:1.6}
+.checkline input{accent-color:var(--teal);margin-top:2px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;max-width:1050px;margin:auto}
+.info-card{background:#0c2138;border:1px solid var(--line);padding:22px;border-radius:9px}
+.info-card .ico{font-size:22px;margin-bottom:14px}
+.info-card h3{font-size:14px;margin-bottom:8px;color:var(--white)}
+.info-card p{font-size:11px;line-height:1.8;color:var(--muted)}
+.faq{max-width:800px;margin:auto}
+details{border-bottom:1px solid var(--line);padding:17px 2px}
+summary{font-size:12px;font-weight:700;cursor:pointer;list-style:none;color:var(--white)}
+summary:after{content:"+";float:right;color:var(--teal);font-size:18px}
+details[open] summary:after{content:"−"}
+details p{font-size:11px;line-height:1.8;color:var(--muted);padding-top:12px}
+footer{padding:25px 5%;border-top:1px solid #ffffff14;display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap;color:#8095a8;font-size:10px}
+footer a { color: var(--teal); }
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);background:#d9fff8;color:#062234;padding:11px 18px;border-radius:7px;font-size:11px;font-weight:800;opacity:0;pointer-events:none;transition:.25s;z-index:30}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:850px){body{padding:0}.shell{border-radius:0}.hero{grid-template-columns:1fr;padding-top:55px}.visual{min-height:300px}.steps-layout{grid-template-columns:1fr}.step-nav{display:grid;grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){header{height:66px;padding:0 6%}nav{display:none;position:absolute;top:66px;left:0;right:0;background:#0b2038;padding:20px 6%;flex-direction:column;align-items:flex-start;border-bottom:1px solid var(--line);z-index:10}nav.open{display:flex}.nav-right{display:none}.menu{display:block}.hero{padding:55px 6% 30px;gap:15px}h1{font-size:46px;letter-spacing:-2px}.visual{min-height:290px}.dashboard{padding-left:48px;min-height:240px}.floating{right:-5px;width:160px}.section{padding:58px 6%}.step-nav{grid-template-columns:1fr 1fr}.step-tab{padding:10px 8px;font-size:9px}.step-panel{padding:18px}.cards{grid-template-columns:1fr}.logos{font-size:12px}footer{padding:22px 6%}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header>
+<a class="brand" href="#home"><span class="brand-mark">ϟ</span>Debian<span>Forge</span></a>
+<nav id="nav">
+<a href="#home">Home</a>
+<a href="#guide">Tutorial</a>
+<a href="#features">Features</a>
+<a href="#faq">FAQ</a>
+</nav>
+<div class="nav-right"><a href="#guide">Documentation</a><a class="pill" href="#guide">Start building ↗</a></div>
+<button class="menu" id="menuBtn">☰</button>
+</header>
+
+<section class="hero" id="home">
+<div>
+<div class="kicker">DEBIAN SERVER • WEB INFRASTRUCTURE</div>
+<h1>Build your<br>own <span>web server.</span></h1>
+<p class="lead">Bangun website sendiri di atas Debian Linux. Ikuti panduan langkah demi langkah mulai dari persiapan server, instalasi Nginx, upload website, sampai mengaktifkan HTTPS.</p>
+<div class="actions">
+<a class="btn btn-main" href="#guide">MULAI TUTORIAL →</a>
+<a class="btn btn-ghost" href="#features">Jelajahi fitur</a>
+</div>
+</div>
+
+<div class="visual">
+<div class="visual-grid"></div>
+<div class="dashboard">
+<div class="dash-sidebar"><span>ϟ</span><span>▦</span><span>⌖</span><span>⚙</span><span>☷</span></div>
+<div class="dash-top"><span>SERVER OVERVIEW / DEBIAN</span><span class="live">● SYSTEM READY</span></div>
+<div class="metrics">
+<div class="metric"><small>OPERATING SYSTEM</small><strong>Debian 12+</strong></div>
+<div class="metric"><small>WEB SERVER</small><strong>Nginx</strong></div>
+<div class="metric"><small>PROTOCOL</small><strong>HTTP / HTTPS</strong></div>
+</div>
+<div class="graph-area">
+<div class="graph"><div class="graph-title">RESOURCE MONITOR · ILUSTRASI</div><div class="bars"><i style="height:35%"></i><i style="height:55%"></i><i style="height:43%"></i><i style="height:80%"></i><i style="height:60%"></i><i style="height:92%"></i><i style="height:68%"></i><i style="height:75%"></i></div></div>
+<div class="graph"><div class="graph-title">SERVICE STATUS</div><div class="ring"></div></div>
+</div>
+<div class="floating"><small>DEPLOYMENT CHECKLIST</small><strong>8 steps</strong><small>From fresh Debian to published website</small><button onclick="document.querySelector('#guide').scrollIntoView({behavior:'smooth'})">OPEN GUIDE ↗</button></div>
+</div>
+</div>
+</section>
+
+<div class="trust">A PRACTICAL GUIDE FOR YOUR OWN LINUX SERVER
+<div class="logos"><span>DEBIAN</span><span>NGINX</span><span>SSH</span><span>HTML · CSS</span><span>HTTPS</span><span>LINUX</span></div>
+</div>
+
+<section class="section" id="guide">
+<div class="section-head">
+<div class="eyebrow">STEP-BY-STEP DOCUMENTATION</div>
+<h2>Deploy your website on Debian</h2>
+<p>Pilih langkah di samping untuk melihat penjelasan, perintah terminal, dan checklist. Tombol salin bisa digunakan untuk menyalin perintah.</p>
+</div>
+<div class="steps-layout">
+<div class="step-nav" id="stepNav"></div>
+<div>
+<article class="step-panel" id="stepPanel" aria-live="polite"></article>
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+</div>
+</div>
+</section>
+
+<section class="section" id="features">
+<div class="section-head">
+<div class="eyebrow">WHAT YOU WILL BUILD</div>
+<h2>Simple tools. Solid foundation.</h2>
+<p>Komponen dasar untuk menerbitkan website dari server Debian milikmu.</p>
+</div>
+<div class="cards">
+<div class="info-card"><div class="ico">⌘</div><h3>SSH Remote Access</h3><p>Kelola server melalui terminal dari komputer lain menggunakan koneksi SSH yang aman.</p></div>
+<div class="info-card"><div class="ico">◈</div><h3>Nginx Web Server</h3><p>Layani file HTML, CSS, JavaScript, dan aset website menggunakan Nginx.</p></div>
+<div class="info-card"><div class="ico">🔒</div><h3>HTTPS Encryption</h3><p>Amankan koneksi website dengan sertifikat TLS setelah domain diarahkan ke server.</p></div>
+</div>
+</section>
+
+<section class="section" id="faq">
+<div class="section-head">
+<div class="eyebrow">NEED TO KNOW</div>
+<h2>Frequently asked questions</h2>
+<p>Hal penting sebelum website dipublikasikan.</p>
+</div>
+<div class="faq">
+<details><summary>Apakah website ini langsung membuat server Debian?</summary><p>Tidak. Halaman ini adalah panduan interaktif di browser. Perintah terminal perlu dijalankan sendiri pada mesin Debian atau VPS yang kamu miliki.</p></details>
+<details><summary>Apakah saya perlu domain?</summary><p>Tidak untuk pengujian. Website bisa diakses melalui alamat IP server. Domain diperlukan agar pengunjung memakai nama seperti contoh.com, dan dibutuhkan untuk alur HTTPS Certbot yang umum.</p></details>
+<details><summary>Apakah perintah ini aman untuk semua server?</summary><p>Sesuaikan dengan versi Debian dan penyedia VPS. Sebelum mengubah firewall, pastikan akses SSH sudah diizinkan agar kamu tidak terkunci dari server. Simpan cadangan konfigurasi penting.</p></details>
+<details><summary>Kenapa website belum bisa diakses dari internet?</summary><p>Periksa IP publik, aturan firewall penyedia VPS, port 80/443, status Nginx, DNS domain, serta apakah jaringan mengizinkan koneksi masuk.</p></details>
+</div>
+</section>
+
+<footer>
+<strong>Debian<span style="color:var(--teal)">Forge.</span></strong>
+<span>Educational project · HTML, CSS & JavaScript in one file</span>
+<a href="#home">Back to top ↑</a>
+</footer>
+</div>
+<div class="toast" id="toast">Perintah berhasil disalin</div>
+
+<script>
+const sampleHtmlCode = [
+  '<!doctype html>',
+  '<html lang="id">',
+  '<head>',
+  '  <meta charset="utf-8">',
+  '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+  '  <title>Website Debian Saya<' + '/title>',
+  '<' + '/head>',
+  '<body>',
+  '  <h1>Berhasil! Website saya berjalan di Debian.<' + '/h1>',
+  '  <p>Halaman ini disajikan oleh Nginx.<' + '/p>',
+  '<' + '/body>',
+  '<' + '/html>'
+].join('\n');
+
+const steps = [
+  {
+    title: "Persiapan server Debian",
+    desc: "Kenali server yang akan digunakan dan pastikan kamu mempunyai akses administratif sebelum memasang layanan apa pun.",
+    intro: "Pada tutorial ini kita memakai Debian 12 atau Debian 13 pada VPS atau komputer yang terhubung ke jaringan. Kamu juga bisa berlatih di mesin virtual. Siapkan akses console dari penyedia VPS atau aplikasi terminal di komputer.",
+    tasks: [
+      ["Siapkan Debian", "Pastikan Debian sudah selesai dipasang dan bisa masuk ke akun pengguna. Tutorial ini menggunakan akun biasa yang memiliki hak sudo, bukan harus selalu login sebagai root."],
+      ["Siapkan alamat server", "Cari alamat IPv4 publik dari panel VPS. Alamat ini berbeda dari alamat lokal seperti 192.168.x.x. Simpan alamat IP, nama pengguna, dan informasi akses secara pribadi."],
+      ["Masuk ke server", "Di Windows, buka PowerShell atau Windows Terminal. Di Linux/macOS, buka Terminal. Jalankan perintah SSH di bawah dan ganti USER dengan nama pengguna serta SERVER_IP dengan IP server."],
+      ["Konfirmasi koneksi pertama", "Saat pertama kali terhubung, SSH mungkin menanyakan apakah fingerprint host dipercaya. Pastikan alamat server benar sebelum mengetik yes. Setelah itu masukkan password; karakter password memang tidak terlihat saat diketik."]
+    ],
+    code: "ssh USER@SERVER_IP",
+    note: "Contoh: ssh admin@203.0.113.10. IP 203.0.113.10 hanya alamat dokumentasi, bukan server sungguhan. Jangan pernah mengirim password atau private key ke orang lain.",
+    output: "Jika berhasil, terminal menampilkan prompt seperti admin@debian:~$. Jalankan whoami untuk melihat nama pengguna dan hostnamectl untuk melihat informasi sistem.",
+    troubleshoot: "Jika Connection timed out, periksa IP, status VPS, jaringan, dan aturan firewall penyedia. Jika Permission denied, periksa nama pengguna dan metode autentikasi. Jika SSH memakai port khusus, tambahkan -p NOMOR_PORT, misalnya ssh -p 2222 USER@SERVER_IP.",
+    check: "Saya dapat masuk ke Debian melalui terminal atau console VPS."
+  },
+  {
+    title: "Perbarui sistem Debian",
+    desc: "Segarkan daftar paket dan pasang pembaruan keamanan serta perbaikan yang tersedia.",
+    intro: "APT adalah pengelola paket Debian. apt update mengunduh informasi versi paket terbaru dari repositori. apt upgrade memasang pembaruan untuk paket yang sudah terinstal. Keduanya memiliki fungsi berbeda dan biasanya dijalankan berurutan.",
+    tasks: [
+      ["Periksa versi Debian", "Jalankan cat /etc/debian_version atau cat /etc/os-release. Pastikan kamu mengetahui versi Debian yang digunakan."],
+      ["Perbarui daftar paket", "Perintah apt update tidak langsung memasang pembaruan; perintah ini hanya memperbarui indeks paket agar Debian mengetahui versi terbaru yang tersedia."],
+      ["Pasang pembaruan", "Jalankan apt upgrade. Opsi -y menjawab konfirmasi dengan otomatis. Jika masih belajar, kamu boleh menghilangkan -y agar dapat membaca dan mengonfirmasi daftar perubahan."],
+      ["Mulai ulang bila diperlukan", "Jika pembaruan kernel atau komponen inti meminta reboot, simpan pekerjaan dan jadwalkan restart. Gunakan sudo reboot hanya saat kamu siap terputus sementara dari SSH."]
+    ],
+    code: "cat /etc/os-release\nsudo apt update\nsudo apt upgrade",
+    note: "Pastikan server memiliki koneksi internet dan ruang disk yang cukup. Pada server penting/produksi, buat snapshot atau backup VPS terlebih dahulu dan lakukan pembaruan pada waktu pemeliharaan.",
+    output: "apt update seharusnya selesai tanpa error repository atau DNS. apt upgrade menampilkan daftar paket yang akan diperbarui, lalu meminta konfirmasi jika kamu tidak memakai -y.",
+    troubleshoot: "Jika muncul Could not resolve, periksa DNS dan koneksi internet server. Jika repository gagal, periksa tanggal sistem, isi /etc/apt/sources.list dan file di /etc/apt/sources.list.d/. Jangan menghapus repository secara acak.",
+    check: "Versi Debian sudah diketahui dan apt update serta apt upgrade selesai dengan sukses."
+  },
+  {
+    title: "Instal dan kenali Nginx",
+    desc: "Pasang web server Nginx, aktifkan otomatis saat boot, lalu periksa status layanannya.",
+    intro: "Nginx menerima permintaan HTTP dari browser dan mengirimkan file website. Pada tutorial dasar ini Nginx akan menyajikan file HTML statis. Nginx juga dapat dikembangkan untuk PHP, aplikasi, atau reverse proxy, tetapi itu di luar konfigurasi awal ini.",
+    tasks: [
+      ["Pasang paket", "Jalankan apt install nginx. Debian akan mengunduh Nginx beserta dependensi yang diperlukan."],
+      ["Aktifkan layanan", "systemctl enable nginx membuat Nginx otomatis berjalan ketika server dinyalakan. systemctl start nginx langsung menjalankannya sekarang. Perintah enable --now mengerjakan keduanya."],
+      ["Periksa status", "systemctl status nginx menampilkan status layanan. Cari teks active (running). Tekan tombol q untuk keluar dari tampilan status."],
+      ["Uji dari server", "curl -I http://localhost meminta header HTTP dari Nginx yang berjalan di mesin itu sendiri."]
+    ],
+    code: "sudo apt install nginx\nsudo systemctl enable --now nginx\nsudo systemctl status nginx\ncurl -I http://localhost",
+    note: "Jangan jalankan dua web server yang sama-sama mencoba memakai port 80. Jika Apache sudah berjalan, Nginx mungkin gagal start karena port tersebut sedang digunakan.",
+    output: "Status yang diharapkan adalah active (running). Perintah curl biasanya mengembalikan baris seperti HTTP/1.1 200 OK atau HTTP/1.1 200.",
+    troubleshoot: "Jika status failed, jalankan sudo journalctl -u nginx --no-pager -n 50 untuk melihat pesan terbaru. Jika pesan menyebut address already in use, periksa layanan lain dengan sudo ss -ltnp | grep ':80'.",
+    check: "Nginx aktif dan curl http://localhost memberikan respons HTTP."
+  },
+  {
+    title: "Atur firewall dengan aman",
+    desc: "Izinkan koneksi SSH dan web. Perhatikan urutan pengaturan agar akses jarak jauh tidak terputus.",
+    intro: "Firewall membatasi koneksi masuk ke server. Ada dua lapisan yang mungkin digunakan: firewall di dalam Debian dan firewall/security group di panel penyedia VPS. Keduanya perlu diperiksa. Untuk website, port TCP 80 dipakai HTTP dan 443 dipakai HTTPS; SSH umumnya menggunakan TCP 22.",
+    tasks: [
+      ["Periksa firewall provider", "Buka panel VPS dan cari menu Firewall, Security Group, atau Network Rules. Pastikan aturan masuk mengizinkan TCP 22 dari alamat yang kamu gunakan, serta TCP 80 dan 443 untuk pengunjung."],
+      ["Pasang UFW bila diperlukan", "UFW adalah antarmuka sederhana untuk mengelola firewall Linux. Jika kamu memakai firewall lain, jangan menumpuk aturan tanpa memahami kebijakannya."],
+      ["Izinkan SSH lebih dahulu", "Jalankan ufw allow OpenSSH sebelum mengaktifkan UFW. Jika SSH memakai port selain 22, izinkan port khusus itu, misalnya sudo ufw allow 2222/tcp."],
+      ["Izinkan trafik web", "Profil Nginx Full membuka HTTP dan HTTPS. Periksa daftar aturan sebelum mengaktifkan firewall."],
+      ["Aktifkan dengan akses cadangan", "Pastikan aturan SSH benar dan idealnya panel console VPS tetap bisa diakses. Baru jalankan ufw enable. Setelah itu periksa ufw status verbose."]
+    ],
+    code: "sudo apt install ufw\nsudo ufw allow OpenSSH\nsudo ufw allow 'Nginx Full'\nsudo ufw status verbose",
+    note: "PERINGATAN PENTING: Jangan aktifkan UFW jika belum yakin aturan SSH benar. Salah konfigurasi dapat mengunci akses SSH. Jika SSH memakai port khusus, izinkan port itu terlebih dahulu. Aktifkan dengan sudo ufw enable hanya setelah verifikasi.",
+    output: "Daftar status UFW seharusnya menunjukkan aturan OpenSSH dan Nginx Full sebagai ALLOW. Jika belum siap mengaktifkannya, biarkan UFW belum aktif dan atur firewall provider terlebih dahulu.",
+    troubleshoot: "Jika SSH terputus setelah perubahan, gunakan console web/VNC dari panel penyedia VPS untuk memperbaiki aturan. Jangan menebak port SSH; periksa konfigurasi server atau dokumentasi provider.",
+    check: "Aturan SSH, HTTP, dan HTTPS sudah diperiksa di firewall server/provider."
+  },
+  {
+    title: "Buat dan unggah file website",
+    desc: "Siapkan direktori khusus website, buat halaman percobaan, lalu ganti dengan file website milikmu.",
+    intro: "Kita akan menyimpan file publik di /var/www/debian-site. Pisahkan file website dari folder konfigurasi sistem. Untuk latihan, buat index.html sederhana terlebih dahulu. Kemudian file tersebut dapat diganti dengan proyek HTML, CSS, JavaScript, gambar, dan aset lainnya.",
+    tasks: [
+      ["Buat direktori", "mkdir -p membuat direktori beserta folder induk jika belum tersedia. Direktori ini menjadi document root website."],
+      ["Atur kepemilikan", "chown mengubah pemilik direktori agar akun kamu dapat mengunggah dan mengedit file. Pada server produksi, gunakan akun deploy khusus dan izin yang lebih ketat."],
+      ["Buat halaman HTML", "Buka nano untuk membuat index.html. Ketik atau tempel HTML sederhana, lalu simpan dengan Ctrl+O, Enter, dan keluar dengan Ctrl+X."],
+      ["Unggah file dari komputer", "Kamu bisa memakai aplikasi SFTP seperti WinSCP atau perintah scp dari terminal lokal. Contoh perintah scp dijalankan dari komputer kamu, bukan dari dalam sesi SSH server."],
+      ["Periksa isi folder", "Gunakan ls -la untuk memastikan index.html dan file pendukung berada di direktori yang benar."]
+    ],
+    code: 'sudo mkdir -p /var/www/debian-site\nsudo chown -R "$USER":"$USER" /var/www/debian-site\nnano /var/www/debian-site/index.html\nls -la /var/www/debian-site',
+    extra: sampleHtmlCode,
+    after: "# Jalankan dari terminal KOMPUTER LOKAL, bukan di dalam SSH:\nscp -r ./folder-website/* USER@SERVER_IP:/var/www/debian-site/",
+    note: "Ganti USER dan SERVER_IP dengan milikmu. Jika memakai WinSCP, protokolnya SFTP, host adalah IP server, port biasanya 22, dan remote directory adalah /var/www/debian-site. Jangan unggah file rahasia seperti .env, backup database, atau private key ke document root.",
+    output: "ls -la /var/www/debian-site menampilkan index.html. Kamu juga dapat memeriksa isi file dengan sed -n '1,30p' /var/www/debian-site/index.html.",
+    troubleshoot: "Jika Permission denied saat unggah, periksa pemilik folder dengan ls -ld /var/www/debian-site. Hindari chmod 777. Atur kepemilikan atau grup secara tepat, bukan membuka izin tulis untuk semua pengguna.",
+    check: "index.html dan seluruh aset website sudah berada di /var/www/debian-site."
+  },
+  {
+    title: "Konfigurasi Nginx untuk website",
+    desc: "Buat server block yang menghubungkan nama domain atau alamat server dengan direktori file website.",
+    intro: "Server block adalah konfigurasi virtual host Nginx. Ia menentukan port yang didengarkan, nama domain, lokasi file website, dan cara menangani URL. Kita akan membuat konfigurasi terpisah bernama debian-site.",
+    tasks: [
+      ["Buat file konfigurasi", "Buka /etc/nginx/sites-available/debian-site dengan nano. Tempel konfigurasi lengkap pada kotak contoh di bawah."],
+      ["Sesuaikan server_name", "Ganti example.com dan www.example.com dengan domain kamu. Jika belum punya domain, untuk pengujian awal kamu bisa memakai alamat IP atau server_name _; namun konfigurasi domain harus diperbarui sebelum HTTPS."],
+      ["Pahami root dan index", "root menunjuk folder file website. index menentukan file yang dicari saat pengunjung membuka halaman utama."],
+      ["Aktifkan konfigurasi", "Buat symbolic link dari sites-available ke sites-enabled. Periksa apakah link sudah ada sebelum membuatnya agar tidak muncul pesan File exists."],
+      ["Uji sebelum reload", "nginx -t memeriksa sintaks konfigurasi. Hanya jika hasilnya successful, jalankan reload agar konfigurasi baru diterapkan."]
+    ],
+    code: "sudo nano /etc/nginx/sites-available/debian-site",
+    extra: "server {\n    listen 80;\n    listen [::]:80;\n    server_name example.com www.example.com;\n\n    root /var/www/debian-site;\n    index index.html;\n\n    location / {\n        try_files $uri $uri/ =404;\n    }\n\n    location ~ /\\. {\n        deny all;\n    }\n}",
+    after: "sudo ln -s /etc/nginx/sites-available/debian-site /etc/nginx/sites-enabled/\nsudo nginx -t\nsudo systemctl reload nginx",
+    note: "Ganti nama domain contoh dengan domain milikmu. Jika symlink sudah ada, jangan membuatnya ulang. Pastikan nginx -t menampilkan syntax is ok dan test is successful sebelum reload.",
+    output: "Saat membuka domain atau IP server, Nginx akan membaca index.html dari /var/www/debian-site. Jika konfigurasi default masih mengambil alih, periksa server block default yang aktif.",
+    troubleshoot: "Jika nginx -t gagal, periksa nomor baris yang disebutkan pada pesan error. Pastikan kurung kurawal, titik koma, nama direktori, dan nama file konfigurasi benar. Lihat log dengan sudo journalctl -u nginx -n 50 --no-pager.",
+    check: "Konfigurasi Nginx lolos pengujian dan layanan berhasil dimuat ulang."
+  },
+  {
+    title: "Uji website dan hubungkan domain",
+    desc: "Periksa website melalui IP publik dan, jika memiliki domain, arahkan DNS domain ke alamat server.",
+    intro: "Sebelum domain digunakan, pastikan website bisa dilayani oleh Nginx. Domain mengubah nama yang mudah diingat menjadi alamat IP server. Pengaturan DNS biasanya dilakukan pada panel registrar atau penyedia DNS.",
+    tasks: [
+      ["Uji dari server", "Gunakan curl untuk melihat respons HTTP dari Nginx. Jika memakai domain, curl juga dapat menguji nama domain tersebut."],
+      ["Atur DNS A record", "Pada panel DNS, buat record A untuk host @ yang menunjuk ke IPv4 publik server. Buat record A untuk www jika ingin memakai www.example.com."],
+      ["Periksa DNS", "Gunakan dig atau nslookup untuk memastikan domain mengarah ke IP server. DNS dapat memerlukan waktu untuk menyebar."],
+      ["Uji dari jaringan luar", "Buka http://IP_SERVER atau http://domain-kamu dari browser. Pastikan firewall provider dan firewall Debian mengizinkan port 80."],
+      ["Periksa log jika gagal", "Log akses dan error Nginx dapat membantu mengetahui apakah permintaan masuk dan mengapa halaman gagal ditampilkan."]
+    ],
+    code: "curl -I http://127.0.0.1\ncurl -I http://SERVER_IP\nsudo nginx -t\nsudo systemctl status nginx",
+    note: "Untuk domain, ganti SERVER_IP dengan IP publik dan example.com dengan domain sebenarnya. Jangan gunakan IP dokumentasi atau domain contoh untuk server sungguhan.",
+    output: "Respons HTTP 200 menunjukkan halaman berhasil disajikan. Respons 301/302 dapat menunjukkan pengalihan. Respons 403 biasanya berkaitan dengan izin atau aturan akses, sedangkan 404 berarti resource tidak ditemukan.",
+    troubleshoot: "Jika domain belum mengarah, periksa record DNS A/AAAA. Jika koneksi timeout, periksa firewall VPS dan port 80. Jika muncul halaman default Nginx, periksa server_name dan konfigurasi site yang aktif. Periksa log dengan sudo tail -n 50 /var/log/nginx/error.log.",
+    check: "Website dapat dibuka dari browser menggunakan IP atau domain."
+  },
+  {
+    title: "Aktifkan HTTPS dan perawatan",
+    desc: "Pasang sertifikat TLS untuk domain publik dan lakukan pemeriksaan berkala pada server.",
+    intro: "HTTPS mengenkripsi koneksi antara browser dan server. Certbot dapat membantu meminta dan memasang sertifikat Let's Encrypt pada Nginx. Domain harus sudah mengarah ke server dan port 80 serta 443 harus dapat dijangkau dari internet.",
+    tasks: [
+      ["Pastikan prasyarat", "Pastikan domain A record mengarah ke IP server, Nginx berjalan, dan port TCP 80 serta 443 terbuka pada firewall Debian dan provider."],
+      ["Pasang Certbot", "Instal Certbot beserta plugin Nginx dari repositori Debian. Periksa versi paket dan dokumentasi Certbot jika metode instalasi pada sistemmu berbeda."],
+      ["Minta sertifikat", "Jalankan Certbot dengan domain yang benar. Ikuti petunjuk verifikasi dan pilih pengalihan ke HTTPS jika ditawarkan dan sesuai kebutuhan."],
+      ["Uji HTTPS", "Buka https://domain-kamu pada browser. Periksa apakah browser menampilkan koneksi aman dan sertifikat berlaku untuk nama domain tersebut."],
+      ["Uji perpanjangan", "Jalankan dry-run untuk menguji proses pembaruan sertifikat. Sertifikat Let's Encrypt memiliki masa berlaku terbatas sehingga perpanjangan otomatis harus berjalan."],
+      ["Rawat server", "Perbarui paket secara teratur, pantau log, simpan backup website dan konfigurasi, serta tinjau akses SSH dan firewall."]
+    ],
+    code: "sudo apt install certbot python3-certbot-nginx\nsudo certbot --nginx -d example.com -d www.example.com\nsudo certbot renew --dry-run",
+    note: "Ganti example.com dengan domain yang benar-benar kamu miliki. Jangan jalankan Certbot untuk domain contoh. Jika hanya mengakses melalui IP tanpa domain, langkah sertifikat domain ini tidak berlaku.",
+    output: "Certbot akan menampilkan informasi sertifikat dan hasil pemasangan. Setelah berhasil, browser seharusnya dapat membuka https://domain-kamu tanpa peringatan sertifikat.",
+    troubleshoot: "Jika validasi gagal, periksa DNS, port 80/443, konfigurasi Nginx, dan apakah domain dapat dijangkau dari internet. Periksa status timer dengan systemctl list-timers | grep certbot dan log Certbot jika diperlukan.",
+    check: "Website dapat diakses melalui HTTPS dan pengujian pembaruan sertifikat berhasil."
+  }
+];
+
+let currentStep = 0;
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function renderNav() {
+  const navContainer = document.getElementById('stepNav');
+  if (!navContainer) return;
+  navContainer.innerHTML = '';
+  steps.forEach((s, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'step-tab' + (idx === currentStep ? ' active' : '');
+    btn.innerHTML = '<b>' + (idx + 1) + '</b> ' + s.title;
+    btn.onclick = function() {
+      currentStep = idx;
+      renderNav();
+      renderPanel();
+    };
+    navContainer.appendChild(btn);
+  });
+}
+
+function renderPanel() {
+  const panel = document.getElementById('stepPanel');
+  if (!panel) return;
+  const s = steps[currentStep];
+
+  const tasksHtml = s.tasks.map(function(t) {
+    return '<div class="task"><b>' + t[0] + ':</b> ' + t[1] + '</div>';
+  }).join('');
+
+  const extraHtml = s.extra
+    ? '<div class="codebox"><div class="codehead"><span>CONTOH ISI FILE / KODE</span><button type="button" onclick="copyCode(this)">Salin</button></div><pre><code>' + escapeHtml(s.extra) + '</code></pre></div>'
+    : '';
+
+  const afterHtml = s.after
+    ? '<div class="codebox"><div class="codehead"><span>PERINTAH TAMBAHAN</span><button type="button" onclick="copyCode(this)">Salin</button></div><pre><code>' + escapeHtml(s.after) + '</code></pre></div>'
+    : '';
+
+  const prevBtn = currentStep > 0
+    ? '<button type="button" class="btn btn-ghost" onclick="prevStep()" style="padding:8px 14px; font-size:10px; margin-right:6px">← Sebelumnya</button>'
+    : '';
+
+  const nextBtn = currentStep < steps.length - 1
+    ? '<button type="button" class="btn btn-main" onclick="nextStep()" style="padding:8px 14px; font-size:10px">Selanjutnya →</button>'
+    : '';
+
+  panel.innerHTML =
+    '<h3>Langkah ' + (currentStep + 1) + ': ' + s.title + '</h3>' +
+    '<p>' + s.desc + '</p>' +
+    '<p style="font-size:12px; color:#d1dce8; line-height:1.8; margin-bottom:14px;"><b>Pengantar:</b> ' + s.intro + '</p>' +
+    '<h4>Panduan Kerja:</h4>' +
+    tasksHtml +
+    '<h4>Perintah Terminal:</h4>' +
+    '<div class="codebox">' +
+      '<div class="codehead"><span>BASH COMMAND</span><button type="button" onclick="copyCode(this)">Salin</button></div>' +
+      '<pre><code>' + escapeHtml(s.code) + '</code></pre>' +
+    '</div>' +
+    extraHtml +
+    afterHtml +
+    '<div class="note"><b>Catatan:</b> ' + s.note + '</div>' +
+    '<div class="result"><b>Hasil yang diharapkan:</b> ' + s.output + '</div>' +
+    '<div class="trouble"><b>Pemecahan Masalah:</b> ' + s.troubleshoot + '</div>' +
+    '<label class="checkline"><input type="checkbox"> ' + s.check + '</label>' +
+    '<div class="step-actions">' +
+      '<span>Langkah ' + (currentStep + 1) + ' dari ' + steps.length + '</span>' +
+      '<div>' + prevBtn + nextBtn + '</div>' +
+    '</div>';
+
+  const bar = document.getElementById('progressBar');
+  if (bar) {
+    bar.style.width = (((currentStep + 1) / steps.length) * 100) + '%';
+  }
+}
+
+function nextStep() {
+  if (currentStep < steps.length - 1) {
+    currentStep++;
+    renderNav();
+    renderPanel();
+    document.getElementById('guide').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function prevStep() {
+  if (currentStep > 0) {
+    currentStep--;
+    renderNav();
+    renderPanel();
+    document.getElementById('guide').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function copyCode(btn) {
+  const codeEl = btn.parentElement.nextElementSibling.querySelector('code');
+  const text = codeEl ? codeEl.innerText : '';
+  navigator.clipboard.writeText(text).then(function() {
+    const toast = document.getElementById('toast');
+    if (toast) {
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); }, 2000);
+    }
+  });
+}
+
+const menuBtn = document.getElementById('menuBtn');
+if (menuBtn) {
+  menuBtn.onclick = function() {
+    document.getElementById('nav').classList.toggle('open');
+  };
+}
+
+try {
+  renderNav();
+  renderPanel();
+} catch (err) {
+  const panel = document.getElementById('stepPanel');
+  if (panel) panel.innerHTML = '<p style="color:#ff8080;">Error: ' + err.message + '</p>';
+}
+</script>
+</body>
+</html>
